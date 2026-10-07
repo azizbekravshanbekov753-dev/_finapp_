@@ -1395,9 +1395,16 @@ const Wallets = {
     const list = this.getAll();
     const w = list.find(x => x.id === id);
     if (w) {
-      w.balance = (Number(w.balance) || 0) + delta;
+      const newBalance = (Number(w.balance) || 0) + delta;
+      // Manfiy balansga ruxsat bermaslik
+      if (delta < 0 && newBalance < 0) {
+        return { ok: false, msg: `Mablag' yetarli emas! Balans: ${(Number(w.balance)||0).toLocaleString('uz-UZ')} so'm` };
+      }
+      w.balance = newBalance;
       this.save(list);
+      return { ok: true };
     }
+    return { ok: false, msg: 'Hamyon topilmadi' };
   },
   transfer(fromId, toId, amount, note = '') {
     amount = Number(amount) || 0;

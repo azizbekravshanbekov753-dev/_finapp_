@@ -435,7 +435,6 @@
     if (!name)          { shake('ef-name');   Toast.show('Nima xarajat qilganingizni kiriting!', 'warn'); return; }
     if (!amount||amount<=0) { shake('ef-amount'); Toast.show('Narxni kiriting!', 'warn'); return; }
 
-    // Balans tekshiruvi
     if (walletId) {
       const wallet = Wallets.get(walletId);
       if (wallet && Number(wallet.balance) < amount) {

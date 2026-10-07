@@ -215,6 +215,14 @@
 <script src="app.js"></script>
 <script>
   function pageRefresh() {
+    // Manfiy balanslarni 0 ga tiklash
+    const wallets = Wallets.getAll();
+    let fixed = false;
+    wallets.forEach(w => {
+      if (Number(w.balance) < 0) { w.balance = 0; fixed = true; }
+    });
+    if (fixed) { Wallets.save(wallets); Toast.show("⚠️ Manfiy balanslar 0 ga tiklandi", 'warn'); }
+
     renderWallets();
     renderTransfers();
   }
@@ -330,24 +338,23 @@
     const w = Wallets.get(activeWalletId);
     if (!w) return;
 
-    // Balans tekshiruvi
+    // Balans tekshiruvi — manfiy bo'lmasin
     if (Number(w.balance) < amount) {
-      Toast.show(`❌ Mablag' yetarli emas! Balans: ${Utils.fmtMoney(w.balance)}`, 'err');
+      Toast.show(`❌ Mablag' yetarli emas!\n"${w.name}" balans: ${Utils.fmtMoney(w.balance)}`, 'err', 4000);
       return;
     }
 
-    Wallets.updateBalance(activeWalletId, -amount);
+    const res = Wallets.updateBalance(activeWalletId, -amount);
+    if (!res || !res.ok) {
+      Toast.show(`❌ ${res?.msg || 'Xatolik yuz berdi'}`, 'err');
+      return;
+    }
 
-    // Tarix
     DB.add('wallet_history', {
-      id:       Utils.uid(),
-      walletId: activeWalletId,
-      walletName: w.name,
-      type:     'withdraw',
-      amount,
-      note:     note || 'Pul yechish',
-      date:     Utils.today(),
-      createdAt: new Date().toISOString(),
+      id: Utils.uid(), walletId: activeWalletId,
+      walletName: w.name, type: 'withdraw',
+      amount, note: note || 'Pul yechish',
+      date: Utils.today(), createdAt: new Date().toISOString(),
     });
 
     Toast.show(`✅ ${Utils.fmtMoney(amount)} yechildi!`, 'ok');
